@@ -1,17 +1,18 @@
 .chessman {
-    font-size: 45px;
-    cursor: pointer;
-    transition: 0.2s;
+  font-size: 45px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: absolute;
 
-    &:hover {
-        scale: 1.2;
-    }
+  &:hover {
+    scale: 1.2;
+  }
 }
 
 .chessman.white {
-    color: wheat;
+  color: wheat;
 }
 
 .chessman.black {
-    color: black;
+  color: black;
 }

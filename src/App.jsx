@@ -1,58 +1,22 @@
 import Chessboard from "./components/Chessboard/Chessboard";
 import Chessman from "./components/Chessman/Chessman";
 import scss from "./App.module.scss";
+import { pawnOptionalMove, pawnMove } from "./Rules/pawn";
+import { knightOptionalMove, knightMove } from "./Rules/knight";
 import { useEffect, useState } from "react";
+import { generalState } from "./Rules/generalState";
+import { roundColor } from "./Rules/calc";
 
 const App = () => {
-  const [chessman] = useState({
-    pawn: {
-      black: {
-        place: ["A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2"],
-        color: "black",
-      },
-      white: {
-        place: ["A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7"],
-        color: "white",
-      },
-      move: [1, 2],
-      icon: "♟",
-      name: "pawn",
-    },
-    rook: {
-      black: { place: ["A1", "H1"], color: "black" },
-      white: { place: ["A8", "H8"], color: "white" },
-      icon: "♜",
-      name: "rook",
-    },
-    bishop: {
-      black: { place: ["B1", "G1"], color: "black" },
-      white: { place: ["B8", "G8"], color: "white" },
-      icon: "♝",
-      name: "bishop",
-    },
-    knight: {
-      black: { place: ["C1", "F1"], color: "black" },
-      white: { place: ["C8", "F8"], color: "white" },
-      icon: "♞",
-      name: "knight",
-    },
-    king: {
-      black: { place: ["E1"], color: "black" },
-      white: { place: ["E8"], color: "white" },
-      icon: "♚",
-      name: "king",
-    },
-    queen: {
-      black: { place: ["D1"], color: "black" },
-      white: { place: ["D8"], color: "white" },
-      icon: "♛",
-      name: "queen",
-    },
+  const [chessman, setChessman] = useState(generalState);
+  const [selectedChess, setSelectedChess] = useState({
+    id: "",
+    chessman: "",
   });
 
   const [chessboard, setChessboard] = useState([]);
   const [optionalMove, setOptionalMove] = useState([]);
-  const [selectedChess, setSelectedChess] = useState("");
+  const [round, setRound] = useState(0);
 
   const generateChessboard = () => {
     const horizon = ["A", "B", "C", "D", "E", "F", "G", "H"];
@@ -76,6 +40,14 @@ const App = () => {
         optionalMove.forEach((filed) => {
           if (filed === value) {
             filedColor = filed;
+
+            for (const check in chessman) {
+              chessman[check][roundColor(round)].place.forEach((value) => {
+                if (filedColor === value) {
+                  filedColor = "";
+                }
+              });
+            }
           }
         });
 
@@ -123,54 +95,73 @@ const App = () => {
     setChessboard(generateChessboard());
   }, [chessman, optionalMove]);
 
-  const handleEvent = (event) => {
-    setSelectedChess(event.target.id);
-    const color = event.target.className;
+  const handleEvent = async (event) => {
+    let color = roundColor(round);
+
+    let colorCheck = event.target.className;
+    const clickType = event.target.nodeName;
     const man = event.target.innerHTML;
-    const [col, row] = event.target.parentElement.id;
-    let move;
-    console.log(event.target.id);
-
-    switch (man) {
-      case "♟": {
-        move = chessman.pawn.move;
-        let optionalMove;
-
-        if (color.includes("black")) {
-          optionalMove = move.map((value) => `${col}${Number(row) + value}`);
-        } else if (color.includes("white")) {
-          optionalMove = move.map((value) => `${col}${Number(row) - value}`);
+    if (clickType === "SPAN" && colorCheck.includes(color)) {
+      const chessID = event.target.parentElement.id;
+      setSelectedChess((prev) => ({ ...prev, id: chessID }));
+      switch (man) {
+        case "♟": {
+          setOptionalMove(pawnOptionalMove(chessman, color, chessID));
+          break;
         }
-
-        setOptionalMove(optionalMove);
-
-        break;
+        case "♜":
+          //console.log("♜");
+          break;
+        case "♝":
+          //console.log("♝");
+          break;
+        case "♞":
+          setOptionalMove(knightOptionalMove(chessman, chessID));
+          break;
+        case "♚":
+          //console.log("♚");
+          break;
+        case "♛":
+          //console.log("♛");
+          break;
+        default:
       }
-      case "♜":
-        console.log("♜");
-        break;
-      case "♝":
-        console.log("♝");
-        break;
-      case "♞":
-        console.log("♞");
-        break;
-      case "♚":
-        console.log("♚");
-        break;
-      case "♛":
-        console.log("♛");
-        break;
-      default:
+      setSelectedChess((prev) => ({ ...prev, chessman: man }));
+    } else if (clickType === "DIV") {
+      const selectFiled = event.target.id;
+      if (optionalMove.some((value) => value === selectFiled)) {
+        switch (selectedChess.chessman) {
+          case "♟":
+            setChessman(pawnMove(selectFiled, color, selectedChess));
+            break;
+
+          case "♜":
+            //console.log("♜");
+            break;
+          case "♝":
+            //console.log("♝");
+            break;
+          case "♞":
+            setChessman(knightMove(selectFiled, color, selectedChess));
+            break;
+          case "♚":
+            //console.log("♚");
+            break;
+          case "♛":
+            //console.log("♛");
+            break;
+          default:
+        }
+        setOptionalMove([]);
+        setRound((prev) => prev + 1);
+      }
     }
   };
 
   return (
-    <>
-      <div onClick={handleEvent} className={scss.chessboard}>
-        {chessboard}
-      </div>
-    </>
+    <div onClick={handleEvent} className={scss.chessboard}>
+      {chessboard}
+    </div>
   );
 };
 
