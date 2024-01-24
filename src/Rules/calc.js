@@ -1,8 +1,14 @@
 const calc = (letter, number) => {
   const horizon = ["A", "B", "C", "D", "E", "F", "G", "H"];
   const index = horizon.indexOf(letter);
-  const newLetter = horizon[index + number];
-  return newLetter;
+  let newLetter = horizon[index + number];
+
+  if (newLetter === undefined) {
+    newLetter = "";
+    return newLetter;
+  } else {
+    return newLetter;
+  }
 };
 
 const roundColor = (round) => {

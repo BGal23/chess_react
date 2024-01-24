@@ -1,8 +1,11 @@
 import Chessboard from "./components/Chessboard/Chessboard";
 import Chessman from "./components/Chessman/Chessman";
 import scss from "./App.module.scss";
-import { pawnOptionalMove, pawnMove } from "./Rules/pawn";
-import { knightOptionalMove, knightMove } from "./Rules/knight";
+import {
+  rookOptionalMove,
+  knightOptionalMove,
+  pawnOptionalMove,
+} from "./Rules/moves";
 import { useEffect, useState } from "react";
 import { generalState } from "./Rules/generalState";
 import { roundColor } from "./Rules/calc";
@@ -33,23 +36,35 @@ const App = () => {
       for (const row of horizon) {
         testArray.push(row);
         const value = `${row}${column}`;
+        let filedOptional;
+        let filedAttack;
+
+        const checkColor = roundColor(round) === "white" ? "black" : "white";
+
+        optionalMove.some((filed) => {
+          if (filed === value) {
+            filedOptional = filed;
+            Object.keys(chessman).forEach((check) => {
+              const opponentPlace = chessman[check][checkColor].place;
+              if (opponentPlace.includes(filedOptional)) {
+                filedAttack = filedOptional;
+              }
+            });
+            Object.keys(chessman).forEach((check) => {
+              const currentColorPlace =
+                chessman[check][roundColor(round)].place;
+
+              if (currentColorPlace.includes(filedOptional)) {
+                filedOptional = "";
+              }
+            });
+            return true;
+          }
+          return false;
+        });
+
         let findChessman;
         let colorChessman;
-        let filedColor;
-
-        optionalMove.forEach((filed) => {
-          if (filed === value) {
-            filedColor = filed;
-
-            for (const check in chessman) {
-              chessman[check][roundColor(round)].place.forEach((value) => {
-                if (filedColor === value) {
-                  filedColor = "";
-                }
-              });
-            }
-          }
-        });
 
         for (const man in chessman) {
           if (chessman[man].black.place.some((id) => id === value)) {
@@ -67,8 +82,8 @@ const App = () => {
               key={value}
               id={value}
               variant={variant ? "white" : "black"}
-              move={filedColor === value}
-              attack={false}
+              move={filedOptional === value}
+              attack={filedAttack === value}
             >
               {<Chessman variant={colorChessman} chessman={findChessman} />}
             </Chessboard>
@@ -79,8 +94,8 @@ const App = () => {
               key={value}
               id={value}
               variant={!variant ? "white" : "black"}
-              move={filedColor === value}
-              attack={false}
+              move={filedOptional === value}
+              attack={filedAttack === value}
             >
               {<Chessman variant={colorChessman} chessman={findChessman} />}
             </Chessboard>
@@ -110,7 +125,7 @@ const App = () => {
           break;
         }
         case "♜":
-          //console.log("♜");
+          setOptionalMove(rookOptionalMove(chessman, chessID));
           break;
         case "♝":
           //console.log("♝");
@@ -130,29 +145,50 @@ const App = () => {
     } else if (clickType === "DIV") {
       const selectFiled = event.target.id;
       if (optionalMove.some((value) => value === selectFiled)) {
+        let chess;
         switch (selectedChess.chessman) {
           case "♟":
-            setChessman(pawnMove(selectFiled, color, selectedChess));
+            chess = "pawn";
             break;
 
           case "♜":
+            chess = "rook";
             //console.log("♜");
             break;
           case "♝":
+            chess = "bishop";
             //console.log("♝");
             break;
           case "♞":
-            setChessman(knightMove(selectFiled, color, selectedChess));
+            chess = "knight";
             break;
           case "♚":
+            chess = "king";
             //console.log("♚");
             break;
           case "♛":
+            chess = "queen";
             //console.log("♛");
             break;
           default:
         }
+
         setOptionalMove([]);
+        setChessman((prev) => {
+          const updatePlace = [...prev[chess][color].place];
+          let foundChess = updatePlace.indexOf(selectedChess.id);
+          updatePlace.splice(foundChess, 1, selectFiled);
+          return {
+            ...prev,
+            [chess]: {
+              ...prev[chess],
+              [color]: {
+                ...prev[chess][color],
+                place: updatePlace,
+              },
+            },
+          };
+        });
         setRound((prev) => prev + 1);
       }
     }

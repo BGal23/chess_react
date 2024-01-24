@@ -15,6 +15,7 @@ const generalState = {
   rook: {
     black: { place: ["A1", "H1"], color: "black" },
     white: { place: ["A8", "H8"], color: "white" },
+    move: [1],
     icon: "♜",
     name: "rook",
   },
